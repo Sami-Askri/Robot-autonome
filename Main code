@@ -1,0 +1,116 @@
+#include <MeAuriga.h>
+#include <Wire.h>
+
+MeBuzzer buzzer;
+MeRGBLed rgbled(0,12);
+MeCompass Compass(PORT_7);
+MeEncoderOnBoard Encoder_1(SLOT1);
+MeEncoderOnBoard Encoder_2(SLOT2);
+MeUltrasonicSensor ultrasonic(PORT_10);
+int16_t moveSpeed = 150;
+
+
+void Forward(void)
+{
+Encoder_1.setMotorPwm(-moveSpeed); 
+Encoder_2.setMotorPwm(moveSpeed); 
+}
+void Backward(void)
+{
+Encoder_1.setMotorPwm(moveSpeed);
+Encoder_2.setMotorPwm(-moveSpeed);
+}
+
+void TurnLeft1(void)
+{  
+Encoder_1.setMotorPwm(-moveSpeed);
+Encoder_2.setMotorPwm(-moveSpeed);
+}
+void TurnRight1(void)
+{
+Encoder_1.setMotorPwm(moveSpeed);
+Encoder_2.setMotorPwm(moveSpeed);
+}
+void ChangeSpeed(int16_t spd)
+{
+moveSpeed = spd;
+}
+void Stop(void)
+{
+Encoder_1.setMotorPwm(0);
+Encoder_2.setMotorPwm(0);
+}
+void BackwardAndTurnLeft(void)
+{
+Encoder_1.setMotorPwm(moveSpeed/4);
+Encoder_2.setMotorPwm(-moveSpeed);
+}
+void BackwardAndTurnRight(void)
+{
+Encoder_1.setMotorPwm(moveSpeed);
+Encoder_2.setMotorPwm(-moveSpeed/4);
+}
+void TurnLeft(void)
+{
+Encoder_1.setMotorPwm(-moveSpeed);
+Encoder_2.setMotorPwm(moveSpeed/2);
+}
+void TurnRight(void)
+{
+Encoder_1.setMotorPwm(-moveSpeed/2);
+Encoder_2.setMotorPwm(moveSpeed);
+}
+
+void setup(){
+Serial.begin(115200);
+TCCR1A = _BV(WGM10);
+TCCR1B = _BV(CS11) | _BV(WGM12);
+TCCR2A = _BV(WGM21) | _BV(WGM20);
+TCCR2B = _BV(CS21);
+Compass.begin();
+rgbled.setpin(44);
+pinMode(11, OUTPUT);
+buzzer.setpin(45); 
+}
+
+void tone()
+ {
+    buzzer.tone(440, 500);
+    buzzer.tone(440, 500);
+    buzzer.tone(440, 500);
+    buzzer.tone(349, 376);
+    buzzer.tone(523, 126);
+    buzzer.tone(440, 500);
+    buzzer.tone(349, 376);
+}
+
+
+void loop(){
+int16_t a;
+a=Compass.getAngle();
+ChangeSpeed(190);
+float d=ultrasonic.distanceCm();
+Forward();
+rgbled.setColor(0,0,255,0);
+rgbled.show();
+if(d<30){
+  rgbled.setColor(0,255,0,0);
+  rgbled.show();
+  Stop();
+  tone();
+  ChangeSpeed(100);
+  TurnLeft1();
+  delay(1350);
+  Forward();
+  delay(2500);
+  ChangeSpeed(190);
+  int16_t b;
+  b=Compass.getAngle();
+  while(b<a-1|b>a+1){
+    b=Compass.getAngle();
+    ChangeSpeed(120);
+    TurnRight1();
+        
+  }
+}
+}
